@@ -1,0 +1,165 @@
+import 'dart:async';
+
+// Enum untuk kategori produk
+enum KategoriProduk { DataManagement, NetworkAutomation }
+
+// Enum untuk fase proyek
+enum FaseProyek { Perencanaan, Pengembangan, Evaluasi }
+
+// Mixin untuk evaluasi kinerja karyawan
+mixin Kinerja {
+  int _produktivitas = 0;
+
+  int get produktivitas => _produktivitas;
+
+  void updateProduktivitas(int nilai) {
+    if (nilai < 0 || nilai > 100) {
+      print('Nilai produktivitas harus antara 0 hingga 100.');
+      return;
+    }
+    _produktivitas = nilai;
+  }
+}
+
+// Kelas Product
+class Product {
+  String namaProduk;
+  double harga;
+  KategoriProduk kategori;
+  int jumlahTerjual = 0;
+
+  Product(this.namaProduk, this.harga, this.kategori) {
+    if (kategori == KategoriProduk.NetworkAutomation && harga < 200000) {
+      throw Exception('Harga produk NetworkAutomation harus minimal 200.000.');
+    } else if (kategori == KategoriProduk.DataManagement && harga >= 200000) {
+      throw Exception('Harga produk DataManagement harus di bawah 200.000.');
+    }
+  }
+
+  // Metode untuk menerapkan diskon
+  void applyDiscount() {
+    if (kategori == KategoriProduk.NetworkAutomation && jumlahTerjual > 50) {
+      double hargaDiskon = harga * 0.85;
+      if (hargaDiskon >= 200000) {
+        harga = hargaDiskon;
+        print('Diskon 15% diterapkan. Harga baru: $harga');
+      } else {
+        print('Diskon tidak diterapkan karena harga akan di bawah 200.000.');
+      }
+    }
+  }
+}
+
+// Enum untuk peran karyawan
+enum PeranKaryawan { Developer, NetworkEngineer, Manager }
+
+// Kelas Karyawan
+class Karyawan with Kinerja {
+  String nama;
+  int umur;
+  PeranKaryawan peran;
+  bool aktif = true;
+
+  Karyawan(this.nama, {required this.umur, required this.peran}) {
+    // Validasi peran karyawan
+    switch (peran) {
+      case PeranKaryawan.Developer:
+        if (umur < 21) throw Exception('Developer harus berusia minimal 21 tahun.');
+        break;
+      case PeranKaryawan.NetworkEngineer:
+        if (umur < 23) throw Exception('Network Engineer harus berusia minimal 23 tahun.');
+        break;
+      case PeranKaryawan.Manager:
+        if (umur < 30) throw Exception('Manager harus berusia minimal 30 tahun.');
+        if (produktivitas < 85) throw Exception('Manager harus memiliki produktivitas minimal 85.');
+        break;
+    }
+  }
+
+  // Mengubah status karyawan menjadi non-aktif
+  void resign() {
+    aktif = false;
+    print('$nama telah resign.');
+  }
+}
+
+// Kelas untuk karyawan tetap
+class KaryawanTetap extends Karyawan {
+  KaryawanTetap(String nama, {required int umur, required PeranKaryawan peran})
+      : super(nama, umur: umur, peran: peran);
+}
+
+// Kelas untuk karyawan kontrak
+class KaryawanKontrak extends Karyawan {
+  KaryawanKontrak(String nama, {required int umur, required PeranKaryawan peran})
+      : super(nama, umur: umur, peran: peran);
+}
+
+// Kelas Proyek
+class Proyek {
+  String namaProyek;
+  FaseProyek fase = FaseProyek.Perencanaan;
+  List<Karyawan> timKaryawan = [];
+  DateTime tanggalMulai;
+
+  Proyek(this.namaProyek, this.tanggalMulai);
+
+  // Menambah karyawan ke proyek
+  void tambahKaryawan(Karyawan karyawan) {
+    if (timKaryawan.length >= 20) {
+      print('Tim proyek penuh. Tidak dapat menambah karyawan lagi.');
+      return;
+    }
+    timKaryawan.add(karyawan);
+    print('${karyawan.nama} ditambahkan ke tim proyek.');
+  }
+
+  // Mengganti fase proyek
+  void gantiFase(FaseProyek faseBaru) {
+    if (faseBaru == FaseProyek.Pengembangan && timKaryawan.length < 5) {
+      print('Minimal 5 karyawan aktif diperlukan untuk memulai fase Pengembangan.');
+      return;
+    }
+
+    if (faseBaru == FaseProyek.Evaluasi &&
+        DateTime.now().difference(tanggalMulai).inDays <= 45) {
+      print('Proyek harus berjalan lebih dari 45 hari untuk masuk fase Evaluasi.');
+      return;
+    }
+
+    fase = faseBaru;
+    print('Proyek beralih ke fase: $fase');
+  }
+}
+
+void main() {
+  // Daftar produk
+  var produk1 = Product('Data Management Tool', 150000, KategoriProduk.DataManagement);
+  var produk2 = Product('Network Automation Tool', 250000, KategoriProduk.NetworkAutomation);
+
+  // Menambahkan penjualan produk
+  produk2.jumlahTerjual = 60;
+  produk2.applyDiscount();
+
+  // Daftar karyawan
+  var karyawan1 = KaryawanTetap('Alice', umur: 35, peran: PeranKaryawan.Manager);
+  var karyawan2 = KaryawanKontrak('Bob', umur: 25, peran: PeranKaryawan.Developer);
+  var karyawan3 = KaryawanTetap('Charlie', umur: 28, peran: PeranKaryawan.NetworkEngineer);
+
+  // Evaluasi kinerja
+  karyawan1.updateProduktivitas(90);
+  print('Produktivitas ${karyawan1.nama}: ${karyawan1.produktivitas}');
+
+  // Membuat proyek
+  var proyek = Proyek('Pengembangan Sistem Baru', DateTime.now().subtract(Duration(days: 50)));
+  proyek.tambahKaryawan(karyawan1);
+  proyek.tambahKaryawan(karyawan2);
+  proyek.tambahKaryawan(karyawan3);
+
+  // Mengganti fase proyek
+  proyek.gantiFase(FaseProyek.Pengembangan);
+  proyek.gantiFase(FaseProyek.Evaluasi);
+
+  // Karyawan resign
+  karyawan2.resign();
+}
