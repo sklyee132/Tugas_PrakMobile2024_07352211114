@@ -1,0 +1,159 @@
+import 'dart:async';
+
+enum KategoriMobil { SUV, Sedan, Hatchback }
+enum FaseProyek { Perencanaan, Pengembangan, Evaluasi }
+
+mixin Kinerja {
+  int produktivitas = 0;
+  void updateProduktivitas(int nilai) => produktivitas = nilai.clamp(0, 100);
+}
+
+abstract class Mobil {
+  String namaMobil;
+  double harga;
+  KategoriMobil kategori;
+  Mobil(this.namaMobil, this.harga, this.kategori);
+
+  void deskripsi();
+}
+
+class MobilSUV extends Mobil {
+  MobilSUV(String namaMobil, double harga)
+      : super(namaMobil, harga, KategoriMobil.SUV);
+  
+  @override
+  void deskripsi() {
+    print('Mobil SUV: $namaMobil, Harga: $harga');
+  }
+}
+
+class MobilSedan extends Mobil {
+  MobilSedan(String namaMobil, double harga)
+      : super(namaMobil, harga, KategoriMobil.Sedan);
+  
+  @override
+  void deskripsi() {
+    print('Mobil Sedan: $namaMobil, Harga: $harga');
+  }
+}
+
+class MobilHatchback extends Mobil {
+  MobilHatchback(String namaMobil, double harga)
+      : super(namaMobil, harga, KategoriMobil.Hatchback);
+  
+  @override
+  void deskripsi() {
+    print('Mobil Hatchback: $namaMobil, Harga: $harga');
+  }
+}
+
+class ProdukDigital {
+  String namaProduk;
+  double harga;
+  KategoriMobil kategori;
+  ProdukDigital(this.namaProduk, this.harga, this.kategori);
+
+  void terapkanDiskon() {
+    if (kategori == KategoriMobil.SUV && harga > 200000) {
+      harga *= 0.85;
+      if (harga < 200000) harga = 200000;
+      print('Diskon diterapkan: $namaProduk, Harga: $harga');
+    }
+  }
+}
+
+abstract class Karyawan with Kinerja {
+  String nama;
+  int umur;
+  String peran;
+  Karyawan(this.nama, {required this.umur, required this.peran});
+  void bekerja();
+}
+
+class KaryawanTetap extends Karyawan {
+  KaryawanTetap(String nama, {required int umur, required String peran})
+      : super(nama, umur: umur, peran: peran);
+  @override
+  void bekerja() => print('$nama bekerja sebagai $peran (Tetap)');
+}
+
+class KaryawanKontrak extends Karyawan {
+  KaryawanKontrak(String nama, {required int umur, required String peran})
+      : super(nama, umur: umur, peran: peran);
+  @override
+  void bekerja() => print('$nama bekerja sebagai $peran (Kontrak)');
+}
+
+class Perusahaan {
+  List<Karyawan> karyawanAktif = [];
+  List<Karyawan> karyawanNonAktif = [];
+
+  void tambahKaryawan(Karyawan karyawan) {
+    if (karyawanAktif.length >= 20) {
+      print('Batas maksimal karyawan aktif tercapai.');
+      return;
+    }
+    karyawanAktif.add(karyawan);
+    print('${karyawan.nama} ditambahkan sebagai karyawan aktif.');
+  }
+
+  void resign(Karyawan karyawan) {
+    karyawanAktif.remove(karyawan);
+    karyawanNonAktif.add(karyawan);
+    print('${karyawan.nama} telah resign.');
+  }
+}
+
+class Proyek {
+  FaseProyek fase = FaseProyek.Perencanaan;
+  List<Karyawan> timKaryawan;
+  DateTime mulai;
+
+  Proyek(this.timKaryawan, this.mulai);
+
+  void gantiFase(FaseProyek faseBaru) {
+    if (faseBaru == FaseProyek.Pengembangan && timKaryawan.length < 5) {
+      print('Tim kurang dari 5 orang.');
+      return;
+    }
+    if (faseBaru == FaseProyek.Evaluasi &&
+        DateTime.now().difference(mulai).inDays < 45) {
+      print('Proyek belum berjalan 45 hari.');
+      return;
+    }
+    fase = faseBaru;
+    print('Fase proyek sekarang: $fase');
+  }
+}
+
+void main() {
+  // Implementasi produk mobil
+  var mobil1 = MobilSUV('Toyota RAV4', 500000);
+  var mobil2 = MobilSedan('Honda Accord', 300000);
+  var mobil3 = MobilHatchback('Volkswagen Golf', 200000);
+  mobil1.deskripsi();
+  mobil2.deskripsi();
+  mobil3.deskripsi();
+
+  // ProdukDigital
+  var produk1 = ProdukDigital('Mobil SUV', 250000, KategoriMobil.SUV);
+  var produk2 = ProdukDigital('Mobil Sedan', 180000, KategoriMobil.Sedan);
+  produk1.terapkanDiskon();
+
+  // Implementasi karyawan
+  var karyawan1 = KaryawanTetap('Alice', umur: 35, peran: 'Manager');
+  var karyawan2 = KaryawanKontrak('Bob', umur: 28, peran: 'Developer');
+
+  karyawan1.updateProduktivitas(90);
+  if (karyawan1.produktivitas >= 85) print('Produktivitas ${karyawan1.nama} valid.');
+
+  var perusahaan = Perusahaan();
+  perusahaan.tambahKaryawan(karyawan1);
+  perusahaan.tambahKaryawan(karyawan2);
+  perusahaan.resign(karyawan2);
+
+  // Proyek
+  var proyek = Proyek([karyawan1], DateTime.now().subtract(Duration(days: 50)));
+  proyek.gantiFase(FaseProyek.Pengembangan);
+  proyek.gantiFase(FaseProyek.Evaluasi);
+}
